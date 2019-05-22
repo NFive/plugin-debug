@@ -4,6 +4,7 @@ namespace NFive.Debug.Client.Extensions
 {
 	public static class StringExtensions
 	{
+		// ReSharper disable once ConvertIfStatementToReturnStatement
 		public static bool IsTruthy(this string str)
 		{
 			if (str.Trim().Equals("true", StringComparison.InvariantCultureIgnoreCase)) return true;
@@ -12,10 +13,6 @@ namespace NFive.Debug.Client.Extensions
 			if (str.Trim().Equals("yes", StringComparison.InvariantCultureIgnoreCase)) return true;
 
 			return false;
-		}
-		public static bool IsFalsy(this string str)
-		{
-			return !str.IsTruthy();
 		}
 	}
 }

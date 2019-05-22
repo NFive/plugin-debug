@@ -46,7 +46,7 @@ namespace NFive.Debug.Client
 			this.Commands.Register("ipl-load", a => IplCommands.Load(this.Logger, a));
 			this.Commands.Register("ipl-unload", a => IplCommands.Unload(this.Logger, a));
 			this.Commands.Register("inv", a => PlayerCommands.Invincible(this.Logger, a.ToList()));
-			this.Commands.Register("veh", a => VehicleCommands.Spawn(this.Logger, a.ToList()));
+			this.Commands.Register("veh", a => VehicleCommands.Run(this.Logger, a.ToList()));
 
 			this.Ticks.Attach(new Action(Tick));
 		}
@@ -130,8 +130,8 @@ namespace NFive.Debug.Client
 
 		private void DrawData(Entity entity)
 		{
+			const float lineHeight = 0.024f;
 			var data = GetDataFor(entity);
-			var lineHeight = 0.024f;
 			var pos = new PointF(0.9f, 0.5f);
 			var size = new SizeF(0.16f, data.Count * lineHeight + 0.04f);
 
@@ -248,7 +248,7 @@ namespace NFive.Debug.Client
 			return string.IsNullOrEmpty(name) ? model.Hash.ToString() : name;
 		}
 
-		/// GameplayCamera.ForwardVector is stubbed out so this is necessary
+		// GameplayCamera.ForwardVector is stubbed out so this is necessary
 		private static Vector3 GameplayCameraForwardVector()
 		{
 			var rotation = (float)(Math.PI / 180.0) * GameplayCamera.Rotation;

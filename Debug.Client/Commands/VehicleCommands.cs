@@ -8,7 +8,7 @@ namespace NFive.Debug.Client.Commands
 {
 	public class VehicleCommands
 	{
-		public static void Spawn(ILogger logger, List<string> args)
+		public static void Run(ILogger logger, List<string> args)
 		{
 			if (!args.Any())
 			{
@@ -42,12 +42,12 @@ namespace NFive.Debug.Client.Commands
 
 			if (!model.IsValid)
 			{
-				logger.Warn("Vehicle Spawn command: Invalid model");
+				logger.Warn("Vehicle spawn command: Invalid model");
 				return;
 			}
 
 			var player = Game.Player.Character;
-			var vehicle = await World.CreateVehicle(model, player.Position, 0f);
+			var vehicle = await World.CreateVehicle(model, player.Position);
 
 			// Set fancy license plate name
 			vehicle.Mods.LicensePlate = " N5 Dev ";
@@ -62,6 +62,13 @@ namespace NFive.Debug.Client.Commands
 		private static void RepairVehicle(ILogger logger)
 		{
 			var vehicle = Game.Player.Character.CurrentVehicle;
+
+			if (vehicle == null)
+			{
+				logger.Warn("Vehicle repair command: Not inside a vehicle");
+				return;
+			}
+
 			vehicle.EngineHealth = 1000;
 			vehicle.IsEngineRunning = true;
 			vehicle.Repair();
@@ -70,6 +77,13 @@ namespace NFive.Debug.Client.Commands
 		private static void CleanVehicle(ILogger logger)
 		{
 			var vehicle = Game.Player.Character.CurrentVehicle;
+
+			if (vehicle == null)
+			{
+				logger.Warn("Vehicle repair command: Not inside a vehicle");
+				return;
+			}
+
 			vehicle.DirtLevel = 0f;
 		}
 	}
