@@ -30,18 +30,23 @@ namespace NFive.Debug.Client
 
 		public DebugService(ILogger logger, ITickManager ticks, IEventManager events, IRpcHandler rpc, ICommandManager commands, OverlayManager overlay, User user) : base(logger, ticks, events, rpc, commands, overlay, user) { }
 
+		public override Task Loaded()
+		{
+			this.Rpc.Event(DebugEvents.Configuration).On<Configuration>((e, c) =>
+			{
+				this.config = c;
+				this.activateKey = (Control)Enum.Parse(typeof(Control), this.config.ActivateKey, true);
+			});
+
+			return base.Loaded();
+		}
+
 		public override async Task Started()
 		{
 			this.config = await this.Rpc.Event(DebugEvents.Configuration).Request<Configuration>();
 			this.activateKey = (Control)Enum.Parse(typeof(Control), this.config.ActivateKey, true);
 
 			this.Logger.Debug($"Activate key set to {this.config.ActivateKey}");
-
-			this.Rpc.Event(DebugEvents.Configuration).On<Configuration>((e, c) =>
-			{
-				this.config = c;
-				this.activateKey = (Control)Enum.Parse(typeof(Control), this.config.ActivateKey, true);
-			});
 
 			this.Commands.Register("ipl-load", a => IplCommands.Load(this.Logger, a));
 			this.Commands.Register("ipl-unload", a => IplCommands.Unload(this.Logger, a));
