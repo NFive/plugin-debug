@@ -1,8 +1,8 @@
+using System.Collections.Generic;
+using System.Linq;
 using CitizenFX.Core;
 using CitizenFX.Core.Native;
 using NFive.SDK.Core.Diagnostics;
-using System.Collections.Generic;
-using System.Linq;
 
 namespace NFive.Debug.Client.Commands
 {

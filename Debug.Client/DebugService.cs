@@ -1,3 +1,9 @@
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Drawing;
+using System.Linq;
+using System.Threading.Tasks;
 using CitizenFX.Core;
 using CitizenFX.Core.Native;
 using CitizenFX.Core.UI;
@@ -5,17 +11,13 @@ using JetBrains.Annotations;
 using NFive.Debug.Client.Commands;
 using NFive.Debug.Shared;
 using NFive.SDK.Client.Commands;
+using NFive.SDK.Client.Communications;
 using NFive.SDK.Client.Events;
 using NFive.SDK.Client.Interface;
-using NFive.SDK.Client.Rpc;
 using NFive.SDK.Client.Services;
 using NFive.SDK.Core.Diagnostics;
 using NFive.SDK.Core.Models.Player;
-using System;
-using System.Collections.Generic;
-using System.Drawing;
-using System.Linq;
-using System.Threading.Tasks;
+using Font = CitizenFX.Core.UI.Font;
 
 namespace NFive.Debug.Client
 {
@@ -26,37 +28,25 @@ namespace NFive.Debug.Client
 		private Control activateKey;
 		private bool enabled;
 		private Entity tracked;
-		private readonly PlayerList players = new PlayerList();
 
-		public DebugService(ILogger logger, ITickManager ticks, IEventManager events, IRpcHandler rpc, ICommandManager commands, OverlayManager overlay, User user) : base(logger, ticks, events, rpc, commands, overlay, user) { }
-
-		public override Task Loaded()
-		{
-			this.Rpc.Event(DebugEvents.Configuration).On<Configuration>((e, c) =>
-			{
-				this.config = c;
-				this.activateKey = (Control)Enum.Parse(typeof(Control), this.config.ActivateKey, true);
-			});
-
-			return base.Loaded();
-		}
+		public DebugService(ILogger logger, ITickManager ticks, ICommunicationManager comms, ICommandManager commands, IOverlayManager overlay, User user) : base(logger, ticks, comms, commands, overlay, user) { }
 
 		public override async Task Started()
 		{
-			this.config = await this.Rpc.Event(DebugEvents.Configuration).Request<Configuration>();
+			this.config = await this.Comms.Event(DebugEvents.Configuration).ToServer().Request<Configuration>();
 			this.activateKey = (Control)Enum.Parse(typeof(Control), this.config.ActivateKey, true);
 
 			this.Logger.Debug($"Activate key set to {this.config.ActivateKey}");
 
-			this.Commands.Register("ipl-load", a => IplCommands.Load(this.Logger, a));
-			this.Commands.Register("ipl-unload", a => IplCommands.Unload(this.Logger, a));
-			this.Commands.Register("inv", a => PlayerCommands.Invincible(this.Logger, a.ToList()));
-			this.Commands.Register("veh", a => VehicleCommands.Run(this.Logger, a.ToList()));
+			this.Commands.On("ipl-load", a => IplCommands.Load(this.Logger, a));
+			this.Commands.On("ipl-unload", a => IplCommands.Unload(this.Logger, a));
+			this.Commands.On("inv", a => PlayerCommands.Invincible(this.Logger, a.ToList()));
+			this.Commands.On("veh", a => VehicleCommands.Run(this.Logger, a.ToList()));
 
-			this.Ticks.Attach(new Action(Tick));
+			this.Ticks.On(OnTick);
 		}
 
-		private async void Tick()
+		private async Task OnTick()
 		{
 			if (Game.IsControlJustPressed(2, this.activateKey))
 			{
@@ -101,6 +91,7 @@ namespace NFive.Debug.Client
 			World.RemoveWaypoint();
 		}
 
+
 		private void DrawCrosshair()
 		{
 			API.DrawRect(0.5f, 0.5f, 0.008333333f, 0.001851852f, 255, 0, 0, 255);
@@ -137,13 +128,13 @@ namespace NFive.Debug.Client
 		{
 			const float lineHeight = 0.024f;
 			var data = GetDataFor(entity);
-			var pos = new PointF(0.9f, 0.5f);
-			var size = new SizeF(0.16f, data.Count * lineHeight + 0.04f);
+			var pos = new Vector2(0.9f, 0.5f);
+			var size = new Vector2(0.16f, data.Count * lineHeight + 0.04f);
 
-			API.DrawRect(pos.X, pos.Y, size.Width, size.Height, 0, 0, 0, 127);
+			API.DrawRect(pos.X, pos.Y, size.X, size.Y, 0, 0, 0, 127);
 
-			pos.Y -= size.Height / 2;
-			pos.X -= size.Width / 2;
+			pos.Y -= size.Y / 2;
+			pos.X -= size.X / 2;
 
 			pos.Y += 0.02f;
 			pos.X += 0.01f;
@@ -171,7 +162,9 @@ namespace NFive.Debug.Client
 				list["Model Name"] = GetModelName(entity.Model);
 				list[""] = "";
 
-				var player = this.players.FirstOrDefault(p => p.Character == entity);
+				var players = ((List<object>)API.GetActivePlayers()).Cast<byte>().Select(p => new Player(p));
+				var player = players.FirstOrDefault(p => p.Character == entity);
+
 				if (player != null)
 				{
 					list["Player Name"] = player.Name;

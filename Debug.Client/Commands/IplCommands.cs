@@ -1,7 +1,7 @@
-using CitizenFX.Core.Native;
-using NFive.SDK.Core.Diagnostics;
 using System;
 using System.Collections.Generic;
+using CitizenFX.Core.Native;
+using NFive.SDK.Core.Diagnostics;
 
 namespace NFive.Debug.Client.Commands
 {
