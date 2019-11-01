@@ -13,9 +13,11 @@ using NFive.Debug.Shared;
 using NFive.SDK.Client.Commands;
 using NFive.SDK.Client.Communications;
 using NFive.SDK.Client.Events;
+using NFive.SDK.Client.Input;
 using NFive.SDK.Client.Interface;
 using NFive.SDK.Client.Services;
 using NFive.SDK.Core.Diagnostics;
+using NFive.SDK.Core.Input;
 using NFive.SDK.Core.Models.Player;
 using Font = CitizenFX.Core.UI.Font;
 
@@ -24,8 +26,9 @@ namespace NFive.Debug.Client
 	[PublicAPI]
 	public class DebugService : Service
 	{
+		private readonly Hotkey targetKey = new Hotkey(InputControl.Aim);
 		private Configuration config;
-		private Control activateKey;
+		private Hotkey activateKey;
 		private bool enabled;
 		private Entity tracked;
 
@@ -34,9 +37,9 @@ namespace NFive.Debug.Client
 		public override async Task Started()
 		{
 			this.config = await this.Comms.Event(DebugEvents.Configuration).ToServer().Request<Configuration>();
-			this.activateKey = (Control)Enum.Parse(typeof(Control), this.config.ActivateKey, true);
+			this.activateKey = new Hotkey(this.config.ActivateKey);
 
-			this.Logger.Debug($"Activate key set to {this.config.ActivateKey}");
+			this.Logger.Debug($"Activate key set to {this.activateKey.UserKeyboardKeyDisplayName}");
 
 			this.Commands.On("ipl-load", a => IplCommands.Load(this.Logger, a));
 			this.Commands.On("ipl-unload", a => IplCommands.Unload(this.Logger, a));
@@ -48,16 +51,16 @@ namespace NFive.Debug.Client
 
 		private async Task OnTick()
 		{
-			if (Game.IsControlJustPressed(2, this.activateKey))
+			if (this.activateKey.IsJustPressed())
 			{
 				this.enabled = !this.enabled;
 
-				Screen.ShowNotification($"Debug tools are now {(this.enabled ? "~g~enabled" : "~r~disabled")}~s~.");
+				Screen.ShowNotification($"Debug tools {(this.enabled ? "~g~enabled" : "~r~disabled")}");
 			}
 
 			if (!this.enabled) return;
 
-			if (Game.IsControlPressed(2, Control.Aim)) // Right click
+			if (this.targetKey.IsPressed())
 			{
 				DrawCrosshair();
 
@@ -90,8 +93,7 @@ namespace NFive.Debug.Client
 
 			World.RemoveWaypoint();
 		}
-
-
+		
 		private void DrawCrosshair()
 		{
 			API.DrawRect(0.5f, 0.5f, 0.008333333f, 0.001851852f, 255, 0, 0, 255);
@@ -247,6 +249,7 @@ namespace NFive.Debug.Client
 		}
 
 		// GameplayCamera.ForwardVector is stubbed out so this is necessary
+		// TODO: Still needed?
 		private static Vector3 GameplayCameraForwardVector()
 		{
 			var rotation = (float)(Math.PI / 180.0) * GameplayCamera.Rotation;
