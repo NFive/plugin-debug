@@ -1,0 +1,24 @@
+plugins:
+- dependency_nodes: 
+  name: NFive/plugin-notifications
+  version: 0.2.0
+  description: Simple client notifications
+  author: NFive
+  license: LGPL-3.0-or-later
+  website: 
+  server:
+    main:
+    - NFive.Notifications.Server
+    include:
+    - NFive.Notifications.Shared
+  client:
+    main:
+    - NFive.Notifications.Client
+    include:
+    - NFive.Notifications.Shared
+    files:
+    - Overlays/NotificationsOverlay.html
+    overlays: 
+    loading_screen: 
+  dependencies: 
+  repositories: 

@@ -47,6 +47,14 @@
       <HintPath>..\packages\Newtonsoft.Json.12.0.2\lib\net45\Newtonsoft.Json.dll</HintPath>
       <Private>False</Private>
     </Reference>
+    <Reference Include="NFive.Notifications.Client.net">
+      <HintPath>..\plugins\NFive\plugin-notifications\NFive.Notifications.Client.net.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="NFive.Notifications.Shared.net">
+      <HintPath>..\plugins\NFive\plugin-notifications\NFive.Notifications.Shared.net.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
     <Reference Include="NFive.SDK.Client.net, Version=0.1.0.60, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\NFive.SDK.Client.0.1.0.60\lib\net452\NFive.SDK.Client.net.dll</HintPath>
       <Private>False</Private>

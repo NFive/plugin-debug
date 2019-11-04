@@ -1,5 +1,4 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
@@ -10,6 +9,7 @@ using CitizenFX.Core.UI;
 using JetBrains.Annotations;
 using NFive.Debug.Client.Commands;
 using NFive.Debug.Shared;
+using NFive.Notifications.Client;
 using NFive.SDK.Client.Commands;
 using NFive.SDK.Client.Communications;
 using NFive.SDK.Client.Events;
@@ -19,7 +19,9 @@ using NFive.SDK.Client.Services;
 using NFive.SDK.Core.Diagnostics;
 using NFive.SDK.Core.Input;
 using NFive.SDK.Core.Models.Player;
+using Configuration = NFive.Debug.Shared.Configuration;
 using Font = CitizenFX.Core.UI.Font;
+using Notification = NFive.Notifications.Shared.Notification;
 
 namespace NFive.Debug.Client
 {
@@ -29,6 +31,7 @@ namespace NFive.Debug.Client
 		private readonly Hotkey targetKey = new Hotkey(InputControl.Aim);
 		private Configuration config;
 		private Hotkey activateKey;
+		private NotificationManager notifications;
 		private bool enabled;
 		private Entity tracked;
 
@@ -41,10 +44,16 @@ namespace NFive.Debug.Client
 
 			this.Logger.Debug($"Activate key set to {this.activateKey.UserKeyboardKeyDisplayName}");
 
-			this.Commands.On("ipl-load", a => IplCommands.Load(this.Logger, a));
-			this.Commands.On("ipl-unload", a => IplCommands.Unload(this.Logger, a));
-			this.Commands.On("inv", a => PlayerCommands.Invincible(this.Logger, a.ToList()));
-			this.Commands.On("veh", a => VehicleCommands.Run(this.Logger, a.ToList()));
+			this.notifications = new NotificationManager(this.Comms);
+
+			var ipl = new IplCommands(this.notifications, this.Logger);
+			var player = new PlayerCommands(this.notifications);
+			var vehicle = new VehicleCommands(this.notifications);
+
+			this.Commands.On("ipl-load", a => ipl.Load(a));
+			this.Commands.On("ipl-unload", a => ipl.Unload(a));
+			this.Commands.On("inv", a => player.Invincible(a.ToList()));
+			this.Commands.On("veh", a => vehicle.Run(a.ToList()));
 
 			this.Ticks.On(OnTick);
 		}
@@ -55,7 +64,11 @@ namespace NFive.Debug.Client
 			{
 				this.enabled = !this.enabled;
 
-				Screen.ShowNotification($"Debug tools {(this.enabled ? "~g~enabled" : "~r~disabled")}");
+				this.notifications.Show(new Notification
+				{
+					Text = $"Debug tools {(this.enabled ? "enabled" : "disabled")}",
+					Type = this.enabled ? "success" : "warning"
+				});
 			}
 
 			if (!this.enabled) return;
@@ -93,7 +106,7 @@ namespace NFive.Debug.Client
 
 			World.RemoveWaypoint();
 		}
-		
+
 		private void DrawCrosshair()
 		{
 			API.DrawRect(0.5f, 0.5f, 0.008333333f, 0.001851852f, 255, 0, 0, 255);
@@ -249,7 +262,6 @@ namespace NFive.Debug.Client
 		}
 
 		// GameplayCamera.ForwardVector is stubbed out so this is necessary
-		// TODO: Still needed?
 		private static Vector3 GameplayCameraForwardVector()
 		{
 			var rotation = (float)(Math.PI / 180.0) * GameplayCamera.Rotation;

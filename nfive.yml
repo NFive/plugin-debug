@@ -1,5 +1,5 @@
 name: NFive/plugin-debug
-version: 1.4.0
+version: 1.5.0
 description: Debug and development tools
 author: NFive
 website: https://nfive.io/
@@ -14,3 +14,5 @@ client:
     - NFive.Debug.Client
   include:
     - NFive.Debug.Shared
+dependencies:
+  NFive/plugin-notifications: ^0.2.0

@@ -1,42 +1,73 @@
 using System;
 using System.Collections.Generic;
 using CitizenFX.Core.Native;
+using NFive.Notifications.Client;
+using NFive.Notifications.Shared;
 using NFive.SDK.Core.Diagnostics;
 
 namespace NFive.Debug.Client.Commands
 {
-	public static class IplCommands
+	public class IplCommands
 	{
-		public static void Load(ILogger logger, IEnumerable<string> args)
+		private readonly NotificationManager notifications;
+		private readonly ILogger logger;
+
+		public IplCommands(NotificationManager notifications, ILogger logger)
+		{
+			this.notifications = notifications;
+			this.logger = logger;
+		}
+
+		public void Load(IEnumerable<string> args)
 		{
 			foreach (var arg in args)
 			{
 				try
 				{
-					logger.Debug($"Loading IPL \"{arg}\"...");
+					this.notifications.Show(new Notification
+					{
+						Text = $"Loading IPL \"{arg}\"...",
+						Type = "success"
+					});
 
 					API.RequestIpl(arg);
 				}
 				catch (Exception ex)
 				{
-					logger.Error(ex, $"Error loading IPL \"{arg}\"");
+					this.logger.Error(ex, $"Error loading IPL \"{arg}\"");
+
+					this.notifications.Show(new Notification
+					{
+						Text = $"Error loading IPL \"{arg}\"",
+						Type = "error"
+					});
 				}
 			}
 		}
 
-		public static void Unload(ILogger logger, IEnumerable<string> args)
+		public void Unload(IEnumerable<string> args)
 		{
 			foreach (var arg in args)
 			{
 				try
 				{
-					logger.Debug($"Unloading IPL \"{arg}\"...");
+					this.notifications.Show(new Notification
+					{
+						Text = $"Unloading IPL \"{arg}\"...",
+						Type = "warning"
+					});
 
 					API.RemoveIpl(arg);
 				}
 				catch (Exception ex)
 				{
-					logger.Error(ex, $"Error unloading IPL \"{arg}\"");
+					this.logger.Error(ex, $"Error unloading IPL \"{arg}\"");
+
+					this.notifications.Show(new Notification
+					{
+						Text = $"Error unloading IPL \"{arg}\"",
+						Type = "error"
+					});
 				}
 			}
 		}

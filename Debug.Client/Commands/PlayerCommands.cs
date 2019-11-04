@@ -2,13 +2,21 @@ using System.Collections.Generic;
 using System.Linq;
 using CitizenFX.Core;
 using NFive.Debug.Client.Extensions;
-using NFive.SDK.Core.Diagnostics;
+using NFive.Notifications.Client;
+using NFive.Notifications.Shared;
 
 namespace NFive.Debug.Client.Commands
 {
-	public static class PlayerCommands
+	public class PlayerCommands
 	{
-		public static void Invincible(ILogger logger, List<string> args)
+		private readonly NotificationManager notifications;
+
+		public PlayerCommands(NotificationManager notifications)
+		{
+			this.notifications = notifications;
+		}
+
+		public void Invincible(List<string> args)
 		{
 			if (!args.Any())
 			{
@@ -19,7 +27,11 @@ namespace NFive.Debug.Client.Commands
 				Game.Player.IsInvincible = args[0].IsTruthy();
 			}
 
-			logger.Debug($"You are now{(Game.Player.IsInvincible ? string.Empty : " not")} invincible");
+			this.notifications.Show(new Notification
+			{
+				Text = $"You are now{(Game.Player.IsInvincible ? string.Empty : " not")} invincible",
+				Type = Game.Player.IsInvincible ? "success" : "warning"
+			});
 		}
 	}
 }
